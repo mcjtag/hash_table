@@ -42,7 +42,7 @@ module hash_table #(
 	parameter KEY_WIDTH = 8,
 	parameter HASH_POLY = 32'h1EDC6F41,
 	parameter HASH_INIT = {ADDR_WIDTH{1'b1}},
-	parameter MEMORY_TYPE = "block", // "block" or "distributed" 
+	parameter MEMORY_TYPE = "block" // "block" or "distributed" 
 )
 (
 	input wire clk,
@@ -73,7 +73,7 @@ hash_func #(
 	.INDEX_WIDTH(INDEX_WIDTH),
 	.HASH_POLY(HASH_POLY),
 	.HASH_INIT(HASH_INIT)
-) hash_fucn_inst (
+) hash_func_inst (
 	.key(key),
     .index(index_addr)
 );

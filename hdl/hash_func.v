@@ -43,6 +43,8 @@ module hash_func #(
 	parameter HASH_INIT = {INDEX_WIDTH{1'b1}}
 )
 (
+	input wire clk,
+	input wire en,
     input wire [KEY_WIDTH-1:0]key,
     output wire [INDEX_WIDTH-1:0]index
 );
@@ -52,9 +54,10 @@ reg [KEY_WIDTH-1:0]mask_key[INDEX_WIDTH-1:0];
 reg [INDEX_WIDTH-1:0]index_tmp = 0;
 reg [KEY_WIDTH-1:0]key_tmp = 0;
 reg [INDEX_WIDTH-1:0]index_out;
+reg [INDEX_WIDTH-1:0]index_reg = 0;
 integer i, j, k;
 
-assign index = index_out;
+assign index = index_reg;
 
 initial begin
 	for (i = 0; i < INDEX_WIDTH; i = i + 1) begin
@@ -117,6 +120,12 @@ always @(*) begin
 				index_out[i] = index_out[i] ^ key[j];
 			end
 		end
+	end
+end
+
+always @(posedge clk) begin
+	if (en == 1'b1) begin
+		index_reg <= index_out;
 	end
 end
 

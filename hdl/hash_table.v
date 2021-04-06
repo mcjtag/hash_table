@@ -47,9 +47,9 @@ module hash_table #(
 (
 	input wire clk,
 	input wire rst,
-	input wire [DATA_WIDTH-1:0]din,
-	input wire [KEY_WIDTH-1:0]key,
-	input wire [1:0]opcode,
+	input wire [DATA_WIDTH-1:0]req_din,
+	input wire [KEY_WIDTH-1:0]req_key,
+	input wire [1:0]req_opcode,
 	input wire req_valid,
 	output wire req_ready,
 	output wire [DATA_WIDTH-1:0]dout,
@@ -57,41 +57,90 @@ module hash_table #(
 	output wire res_status
 );
 
-localparam INDEX_WIDTH = ADDR_WIDTH;
+localparam TABLE_WIDTH = KEY_WIDTH+DATA_WIDTH+ADDR_WIDTH+1;
 
-localparam [1:0]
-	OPCODE_CLEAR = 0,
-	OPCODE_INSERT = 1,
-	OPCODE_DELETE = 2,
-	OPCODE_SEARCH = 3;
-	
-wire [INDEX_WIDTH-1:0]index_addr;
+wire [ADDR_WIDTH-1:0]index_addr;
 wire [DATA_WIDTH-1:0]index_data;
+wire [ADDR_WIDTH-1:0]ctl_index_din;
+wire [ADDR_WIDTH-1:0]ctl_index_addr;
+wire ctl_index_we;
 	
 hash_func #(
 	.KEY_WIDTH(KEY_WIDTH),
-	.INDEX_WIDTH(INDEX_WIDTH),
+	.INDEX_WIDTH(ADDR_WIDTH),
 	.HASH_POLY(HASH_POLY),
 	.HASH_INIT(HASH_INIT)
 ) hash_func_inst (
+	.clk(clk),
+	.en(req_ready & req_valid),
 	.key(key),
     .index(index_addr)
 );
 
 hash_sdpram #(
 	.MEMORY_TYPE(MEMORY_TYPE),
-	.DATA_WIDTH(), // !
+	.DATA_WIDTH(ADDR_WIDTH),
 	.ADDR_WIDTH(ADDR_WIDTH),
-	.INIT_VALUE(0),
-	.INIT_FILE("")
+	.INIT_VALUE(0)
 ) hash_sdpram_index (
 	.clk(clk),
-	.dina(),  // Control
-	.addra(), // Control
-	.wea(),   // Control
+	.dina(ctl_index_din),
+	.addra(ctl_index_addr),
+	.wea(ctl_index_we),
 	.addrb(index_addr),
 	.doutb(index_data)
 );
 
-	
+wire [TABLE_WIDTH-1:0]ctl_table_din;
+wire [TABLE_WIDTH-1:0]ctl_table_dout;
+wire [ADDR_WIDTH-1:0]ctl_table_addr;
+wire ctl_table_we;
+wire [1:0]ctl_table_arb;
+reg [ADDR_WIDTH-1:0]table_addr;
+
+hash_sdpram #(
+	.MEMORY_TYPE(MEMORY_TYPE),
+	.DATA_WIDTH(TABLE_WIDTH),
+	.ADDR_WIDTH(ADDR_WIDTH),
+	.INIT_VALUE(0),
+	.INIT_FILE("")
+) hash_sdpram_table (
+	.clk(clk),
+	.dina(ctl_table_din),
+	.addra(ctl_table_addr),
+	.wea(ctl_table_we),
+	.addrb(table_addr),
+	.doutb(ctl_table_dout)
+);
+
+hash_control #(
+	.ADDR_WIDTH(ADDR_WIDTH)
+) hash_control_inst (
+	.clk(clk),
+	.rst(rst),
+	.req_din(req_din),
+	.req_key(req_key),
+	.req_opcode(req_opcode),
+	.req_valid(req_valid),
+	.req_ready(req_ready),
+	.index_din(ctl_index_din),
+	.index_addr(ctl_index_addr),
+	.index_we(ctl_index_we),
+	.index_dout(index_data),
+	.table_din(ctl_table_din),
+	.table_dout(ctl_table_dout),
+	.table_addr(ctl_table_addr),
+	.table_we(ctl_table_we),
+	.table_arb(ctl_table_arb)
+);
+
+always @(*) begin
+	case (ctl_table_arb)
+	2'b00: table_addr = 0;
+	2'b01: table_addr = index_data;
+	2'b10: table_addr = ctl_table_addr;
+	2'b11: table_addr = ctl_table_dout[ADDR_WIDTH-:ADDR_WIDTH];
+	endcase
+end
+
 endmodule  

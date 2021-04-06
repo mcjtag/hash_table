@@ -3,7 +3,7 @@
 // Company: 
 // Engineer: Dmitry Matyunin (https://github.com/mcjtag)
 // 
-// Create Date: 03.08.2020 13:33:27
+// Create Date: 01.04.2021 23:17:54
 // Design Name: 
 // Module Name: hash_sdpram
 // Project Name: hash_table
@@ -15,7 +15,7 @@
 // Revision 0.01 - File Created
 // Additional Comments:
 // License: MIT
-//  Copyright (c) 2020 Dmitry Matyunin
+//  Copyright (c) 2021 Dmitry Matyunin
 //  Permission is hereby granted, free of charge, to any person obtaining a copy
 //  of this software and associated documentation files (the "Software"), to deal
 //  in the Software without restriction, including without limitation the rights
@@ -40,32 +40,26 @@ module hash_sdpram #(
 	parameter MEMORY_TYPE = "block", // "block" or "distributed" 
 	parameter DATA_WIDTH = 8,
 	parameter ADDR_WIDTH = 5,
-	parameter INIT_VALUE = 0,
-	parameter INIT_FILE = ""
+	parameter INIT_VALUE = 0
 )
 (
 	input wire clk,
 	input wire [DATA_WIDTH-1:0]dina,
 	input wire [ADDR_WIDTH-1:0]addra,
-	input wire wea,
 	input wire [ADDR_WIDTH-1:0]addrb,
+	input wire wea,
 	output wire [DATA_WIDTH-1:0]doutb
 );
 
-(* ram_style = MEMORY_TYPE *)
-reg [DATA_WIDTH-1:0]ram[2**ADDR_WIDTH-1:0];
+(* ram_style = MEMORY_TYPE *) reg [DATA_WIDTH-1:0]ram[2**ADDR_WIDTH-1:0];
 reg [ADDR_WIDTH-1:0]rdoutb;
 integer i;
 
 assign doutb = rdoutb;
 
 initial begin
-	if (INIT_FILE == "") begin
-		for (i = 0; i < 2**ADDR_WIDTH; i = i + 1) begin
-			ram[i] = INIT_VALUE;
-		end
-	end else begin
-		$readmemh(INIT_FILE, ram); 
+	for (i = 0; i < 2**ADDR_WIDTH; i = i + 1) begin
+		ram[i] = INIT_VALUE;
 	end
 end
 

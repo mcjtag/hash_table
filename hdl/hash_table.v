@@ -52,7 +52,7 @@ module hash_table #(
 	input wire [1:0]req_opcode,
 	input wire req_valid,
 	output wire req_ready,
-	output wire [DATA_WIDTH-1:0]dout,
+	output wire [DATA_WIDTH-1:0]res_dout,
 	output wire res_valid,
 	output wire res_status
 );
@@ -60,11 +60,17 @@ module hash_table #(
 localparam TABLE_WIDTH = KEY_WIDTH+DATA_WIDTH+ADDR_WIDTH+1;
 
 wire [ADDR_WIDTH-1:0]index_addr;
-wire [DATA_WIDTH-1:0]index_data;
+wire [ADDR_WIDTH-1:0]index_data;
 wire [ADDR_WIDTH-1:0]ctl_index_din;
 wire [ADDR_WIDTH-1:0]ctl_index_addr;
 wire ctl_index_we;
-	
+wire [TABLE_WIDTH-1:0]ctl_table_din;
+wire [TABLE_WIDTH-1:0]ctl_table_dout;
+wire [ADDR_WIDTH-1:0]ctl_table_addr;
+wire ctl_table_we;
+wire [1:0]ctl_table_arb;
+reg [ADDR_WIDTH-1:0]table_addr;
+
 hash_func #(
 	.KEY_WIDTH(KEY_WIDTH),
 	.INDEX_WIDTH(ADDR_WIDTH),
@@ -73,7 +79,7 @@ hash_func #(
 ) hash_func_inst (
 	.clk(clk),
 	.en(req_ready & req_valid),
-	.key(key),
+	.key(req_key),
     .index(index_addr)
 );
 
@@ -90,13 +96,6 @@ hash_sdpram #(
 	.addrb(index_addr),
 	.doutb(index_data)
 );
-
-wire [TABLE_WIDTH-1:0]ctl_table_din;
-wire [TABLE_WIDTH-1:0]ctl_table_dout;
-wire [ADDR_WIDTH-1:0]ctl_table_addr;
-wire ctl_table_we;
-wire [1:0]ctl_table_arb;
-reg [ADDR_WIDTH-1:0]table_addr;
 
 hash_sdpram #(
 	.MEMORY_TYPE(MEMORY_TYPE),

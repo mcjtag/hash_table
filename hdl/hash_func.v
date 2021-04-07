@@ -55,7 +55,7 @@ reg [INDEX_WIDTH-1:0]index_tmp = 0;
 reg [KEY_WIDTH-1:0]key_tmp = 0;
 reg [INDEX_WIDTH-1:0]index_out;
 reg [INDEX_WIDTH-1:0]index_reg = 0;
-integer i, j, k;
+integer i, j;
 
 assign index = index_reg;
 

@@ -40,7 +40,7 @@ module hash_control #(
 	parameter ADDR_WIDTH = 8,
 	parameter DATA_WIDTH = 8,
 	parameter KEY_WIDTH = 8,
-	parameter TABLE_WIDTH = 8*3+1
+	parameter TABLE_WIDTH = ADDR_WIDTH+DATA_WIDTH+KEY_WIDTH+1
 )
 (
 	input wire clk,
@@ -117,7 +117,15 @@ always @(posedge clk) begin
 		STATE_IDLE: begin
 			if (req_valid == 1'b1) begin
 				case (req_opcode)
-				OPCODE_CLEAR: state <= STATE_CLEAR;
+				OPCODE_CLEAR: begin
+					ind_we <= 1'b1;
+					tbl_we <= 1'b1;
+					ind_addr <= 0;
+					tbl_addr <= 0;
+					ind_din <= {ADDR_WIDTH{1'b0}};
+					tbl_din <= {TABLE_WIDTH{1'b0}};
+					state <= STATE_CLEAR;
+				end
 				OPCODE_INSERT: state <= STATE_IDLE;
 				OPCODE_DELETE: state <= STATE_IDLE;
 				OPCODE_SEARCH: state <= STATE_IDLE;
@@ -125,21 +133,12 @@ always @(posedge clk) begin
 			end
 		end
 		STATE_CLEAR: begin
-			if (ind_we & tbl_we) begin
-				tbl_addr <= tbl_addr + 1;
-				ind_addr <= ind_addr + 1;
-				if (tbl_addr == {ADDR_WIDTH{1'b1}}) begin
-					ind_we <= 1'b0;
-					tbl_we <= 1'b0;
-					state <= STATE_IDLE;
-				end
-			end else begin
-				ind_we <= 1'b1;
-				tbl_we <= 1'b1;
-				ind_addr <= 0;
-				tbl_addr <= 0;
-				ind_din <= 0;
-				tbl_din <= 0;
+			tbl_addr <= tbl_addr + 1;
+			ind_addr <= ind_addr + 1;
+			if (tbl_addr == {ADDR_WIDTH{1'b1}}) begin
+				ind_we <= 1'b0;
+				tbl_we <= 1'b0;
+				state <= STATE_IDLE;
 			end
 		end
 		endcase
